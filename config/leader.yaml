@@ -1,0 +1,34 @@
+# Copyright 2025 Enactic, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+  # ---------------------------------------------------------
+  # Shared gains:
+  # • Kp/Kd are shared between bilateral and unilateral control.
+  # • Increasing Kp/Kd makes contact feel more "real" but also heavier.
+  #
+  # Friction model (tanh):
+  #   τ_fric(ω) = Fo + Fv·ω + Fc·tanh(k·ω)
+  #   Fc : Coulomb friction magnitude [Nm]
+  #   k  : tanh steepness near zero velocity
+  #   Fv : Viscous friction coefficient [Nm·s/rad]
+  #   Fo : Constant bias/offset torque [Nm]
+  # -------------------------------------------------------
+
+LeaderArmParam:
+  Kp: [240.0, 240.0, 240.0, 240.0, 24.0, 31.0, 25.0, 16.0]
+  Kd: [3.0, 3.0, 3.0, 3.0, 0.2, 0.2, 0.2, 0.2]
+  Fc: [0.306,    0.306,   0.40,   0.166,   0.050,   0.083,  0.172,  0.0512]
+  k:  [28.417,  28.417,  29.065,  130.038, 151.771, 242.287, 7.888,  4.000]
+  Fv: [0.063,    0.0630,   0.604,   0.813,   0.029,   0.072,  0.084,  0.084]
+  Fo: [0.088,    0.088,   0.008,  -0.058,   0.005,   0.009, -0.059, -0.050]
