@@ -63,7 +63,7 @@ int main() {
         // Set device mode to param and query motor id
         std::cout << "\n=== Querying Motor IDs ===" << std::endl;
         openarm.set_callback_mode_all(openarm::damiao_motor::CallbackMode::PARAM);
-        openarm.query_param_all(static_cast<int>(openarm::damiao_motor::RegisterRID::MST_ID));
+        openarm.query_param_all(static_cast<int>(openarm::damiao_motor::RID::MST_ID));
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         openarm.recv_all();
@@ -72,12 +72,12 @@ int main() {
         // Access motors through components
         for (const auto& motor : openarm.get_arm().get_motors()) {
             std::cout << "Arm Motor: " << motor.get_send_can_id() << " ID: "
-                      << motor.get_param(static_cast<int>(openarm::damiao_motor::RegisterRID::MST_ID))
+                      << motor.get_param(static_cast<int>(openarm::damiao_motor::RID::MST_ID))
                       << std::endl;
         }
         for (const auto& motor : openarm.get_gripper().get_motors()) {
             std::cout << "Gripper Motor: " << motor.get_send_can_id() << " ID: "
-                      << motor.get_param(static_cast<int>(openarm::damiao_motor::RegisterRID::MST_ID))
+                      << motor.get_param(static_cast<int>(openarm::damiao_motor::RID::MST_ID))
                       << std::endl;
         }
 
