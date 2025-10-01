@@ -13,60 +13,60 @@
 // limitations under the License.
 
 #pragma once
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
+#include <urdf_parser/urdf_parser.h>
+
+#include <Eigen/Dense>
+#include <fstream>
+#include <iostream>
 #include <kdl/chain.hpp>
 #include <kdl/chaindynparam.hpp>
-#include <kdl_parser/kdl_parser.hpp>
 #include <kdl/chainfksolverpos_recursive.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
-#include <urdf_parser/urdf_parser.h>
-#include <Eigen/Dense>
-#include <vector>
-#include <iostream>
-#include <fstream>
+#include <kdl_parser/kdl_parser.hpp>
 #include <sstream>
+#include <vector>
 /*
  * Compute gravity and inertia compensation using Orocos
  * Kinematics and Dynamics Library (KDL).
  */
-class Dynamics
-{
-        private:
-                std::shared_ptr<urdf::ModelInterface> urdf_model_interface;
+class Dynamics {
+private:
+    std::shared_ptr<urdf::ModelInterface> urdf_model_interface;
 
-                std::string urdf_path;
-                std::string start_link;
-                std::string end_link;
+    std::string urdf_path;
+    std::string start_link;
+    std::string end_link;
 
-                KDL::JntSpaceInertiaMatrix inertia_matrix;
-                KDL::JntArray q;
-                KDL::JntArray q_d;
-                KDL::JntArray coriolis_forces;
-                KDL::JntArray gravity_forces;
+    KDL::JntSpaceInertiaMatrix inertia_matrix;
+    KDL::JntArray q;
+    KDL::JntArray q_d;
+    KDL::JntArray coriolis_forces;
+    KDL::JntArray gravity_forces;
 
-                KDL::JntArray biasangle;
+    KDL::JntArray biasangle;
 
-                KDL::Tree kdl_tree;
-                KDL::Chain kdl_chain;
-                std::unique_ptr<KDL::ChainDynParam> solver;
+    KDL::Tree kdl_tree;
+    KDL::Chain kdl_chain;
+    std::unique_ptr<KDL::ChainDynParam> solver;
 
-        public:
-                Dynamics(std::string urdf_path, std::string start_link, std::string end_link);
-                ~Dynamics();
+public:
+    Dynamics(std::string urdf_path, std::string start_link, std::string end_link);
+    ~Dynamics();
 
-                bool Init();
-                void GetGravity(const double *motor_position, double *gravity);
-                void GetCoriolis(const double *motor_position, const double *motor_velocity, double *coriolis);
-                void GetMassMatrixDiagonal(const double *motor_position, double *inertia_diag);
+    bool Init();
+    void GetGravity(const double *motor_position, double *gravity);
+    void GetCoriolis(const double *motor_position, const double *motor_velocity, double *coriolis);
+    void GetMassMatrixDiagonal(const double *motor_position, double *inertia_diag);
 
-                void GetJacobian(const double *motor_position, Eigen::MatrixXd &jacobian);
+    void GetJacobian(const double *motor_position, Eigen::MatrixXd &jacobian);
 
-                void GetNullSpace(const double *motor_positon, Eigen::MatrixXd &nullspace);
+    void GetNullSpace(const double *motor_positon, Eigen::MatrixXd &nullspace);
 
-                void GetNullSpaceTauSpace(const double* motor_position, Eigen::MatrixXd& nullspace_T);
+    void GetNullSpaceTauSpace(const double *motor_position, Eigen::MatrixXd &nullspace_T);
 
-                void GetEECordinate(const double *motor_position, Eigen::Matrix3d &R, Eigen::Vector3d &p);
+    void GetEECordinate(const double *motor_position, Eigen::Matrix3d &R, Eigen::Vector3d &p);
 
-                void GetPreEECordinate(const double *motor_position, Eigen::Matrix3d &R, Eigen::Vector3d &p);
+    void GetPreEECordinate(const double *motor_position, Eigen::Matrix3d &R, Eigen::Vector3d &p);
 };

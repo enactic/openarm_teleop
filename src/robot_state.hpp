@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include <vector>
 #include <mutex>
+#include <vector>
 
 // Represents the state of a single joint: position, velocity, and effort.
 struct JointState {
@@ -26,74 +26,72 @@ struct JointState {
 
 // Manages reference and response states for a robot component (e.g., arm, hand).
 class RobotState {
-    public:
-        RobotState() = default;
-    
-        explicit RobotState(size_t num_joints)
-            : response_(num_joints), reference_(num_joints) {}
-    
-        // --- Set/Get reference (target) joint states ---
-        void set_reference(size_t index, const JointState& state) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            if (index < reference_.size()) {
-                reference_[index] = state;
-            }
+public:
+    RobotState() = default;
+
+    explicit RobotState(size_t num_joints) : response_(num_joints), reference_(num_joints) {}
+
+    // --- Set/Get reference (target) joint states ---
+    void set_reference(size_t index, const JointState& state) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (index < reference_.size()) {
+            reference_[index] = state;
         }
-    
-        void set_all_references(const std::vector<JointState>& states) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            reference_ = states;
+    }
+
+    void set_all_references(const std::vector<JointState>& states) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        reference_ = states;
+    }
+
+    JointState get_reference(size_t index) const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return index < reference_.size() ? reference_[index] : JointState{};
+    }
+
+    std::vector<JointState> get_all_references() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return reference_;
+    }
+
+    void set_response(size_t index, const JointState& state) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (index < response_.size()) {
+            response_[index] = state;
         }
-    
-        JointState get_reference(size_t index) const {
-            std::lock_guard<std::mutex> lock(mutex_);
-            return index < reference_.size() ? reference_[index] : JointState{};
-        }
-    
-        std::vector<JointState> get_all_references() const {
-            std::lock_guard<std::mutex> lock(mutex_);
-            return reference_;
-        }
-    
-        void set_response(size_t index, const JointState& state) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            if (index < response_.size()) {
-                response_[index] = state;
-            }
-        }
-    
-        void set_all_responses(const std::vector<JointState>& states) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            response_ = states;
-        }
-    
-        JointState get_response(size_t index) const {
-            std::lock_guard<std::mutex> lock(mutex_);
-            return index < response_.size() ? response_[index] : JointState{};
-        }
-    
-        std::vector<JointState> get_all_responses() const {
-            std::lock_guard<std::mutex> lock(mutex_);
-            return response_;
-        }
-    
-        void resize(size_t new_size) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            reference_.resize(new_size);
-            response_.resize(new_size);
-        }
-    
-        size_t get_size() const {
-            std::lock_guard<std::mutex> lock(mutex_);
-            return response_.size();  // assume same size for both
-        }
-    
-    private:
-        mutable std::mutex mutex_;
-        std::vector<JointState> response_;
-        std::vector<JointState> reference_;
-    };
-    
+    }
+
+    void set_all_responses(const std::vector<JointState>& states) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        response_ = states;
+    }
+
+    JointState get_response(size_t index) const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return index < response_.size() ? response_[index] : JointState{};
+    }
+
+    std::vector<JointState> get_all_responses() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return response_;
+    }
+
+    void resize(size_t new_size) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        reference_.resize(new_size);
+        response_.resize(new_size);
+    }
+
+    size_t get_size() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return response_.size();  // assume same size for both
+    }
+
+private:
+    mutable std::mutex mutex_;
+    std::vector<JointState> response_;
+    std::vector<JointState> reference_;
+};
 
 // Manages the joint states of robot components (arm, hand).
 class RobotSystemState {
@@ -120,14 +118,14 @@ public:
     void set_all_references(const std::vector<JointState>& all_refs) {
         const size_t arm_size = arm_state_.get_size();
         const size_t hand_size = hand_state_.get_size();
-    
+
         if (all_refs.size() != arm_size + hand_size) {
             throw std::runtime_error("set_all_references: size mismatch.");
         }
-    
+
         std::vector<JointState> arm_refs(all_refs.begin(), all_refs.begin() + arm_size);
         std::vector<JointState> hand_refs(all_refs.begin() + arm_size, all_refs.end());
-    
+
         arm_state_.set_all_references(arm_refs);
         hand_state_.set_all_references(hand_refs);
     }
@@ -141,7 +139,7 @@ public:
         combined.insert(combined.end(), hand.begin(), hand.end());
         return combined;
     }
-    
+
     void set_all_responses(const std::vector<JointState>& all_responses) {
         const size_t arm_size = arm_state_.get_size();
         const size_t hand_size = hand_state_.get_size();
@@ -153,18 +151,15 @@ public:
         if (all_responses.size() != arm_size + hand_size) {
             throw std::runtime_error("set_all_responses: size mismatch.");
         }
-    
+
         std::vector<JointState> arm_res(all_responses.begin(), all_responses.begin() + arm_size);
         std::vector<JointState> hand_res(all_responses.begin() + arm_size, all_responses.end());
-        
+
         arm_state_.set_all_responses(arm_res);
         hand_state_.set_all_responses(hand_res);
-                
     }
 
-    size_t get_total_joint_count() const {
-        return arm_state_.get_size() + hand_state_.get_size();
-    }
+    size_t get_total_joint_count() const { return arm_state_.get_size() + hand_state_.get_size(); }
 
 private:
     RobotState arm_state_;

@@ -14,16 +14,14 @@
 
 #include <atomic>
 #include <chrono>
+#include <controller/dynamics.hpp>
 #include <csignal>
-#include <iostream>
-#include <thread>
-#include <csignal>
-#include <atomic>
 #include <filesystem>
+#include <iostream>
 #include <openarm/can/socket/openarm.hpp>
 #include <openarm/damiao_motor/dm_motor_constants.hpp>
-#include <controller/dynamics.hpp>
 #include <openarm_port/openarm_init.hpp>
+#include <thread>
 
 std::atomic<bool> keep_running(true);
 
@@ -41,10 +39,11 @@ int main(int argc, char** argv) {
         std::string arm_side = "right_arm";
         std::string can_interface = "can0";
 
-
         if (argc < 4) {
-            std::cerr << "Usage: " << argv[0] << " <arm_side> <can_interface> <urdf_path>" << std::endl;
-            std::cerr << "Example: " << argv[0] << " right_arm can0 /tmp/v10_bimanual.urdf" << std::endl;
+            std::cerr << "Usage: " << argv[0] << " <arm_side> <can_interface> <urdf_path>"
+                      << std::endl;
+            std::cerr << "Example: " << argv[0] << " right_arm can0 /tmp/v10_bimanual.urdf"
+                      << std::endl;
             return 1;
         }
 
@@ -53,7 +52,8 @@ int main(int argc, char** argv) {
         std::string urdf_path = argv[3];
 
         if (arm_side != "left_arm" && arm_side != "right_arm") {
-            std::cerr << "[ERROR] Invalid arm_side: " << arm_side << ". Must be 'left_arm' or 'right_arm'." << std::endl;
+            std::cerr << "[ERROR] Invalid arm_side: " << arm_side
+                      << ". Must be 'left_arm' or 'right_arm'." << std::endl;
             return 1;
         }
 
@@ -68,13 +68,14 @@ int main(int argc, char** argv) {
         std::cout << "URDF path      : " << urdf_path << std::endl;
 
         std::string root_link = "openarm_body_link0";
-        std::string leaf_link = (arm_side == "left_arm") ? "openarm_left_hand" : "openarm_right_hand";
+        std::string leaf_link =
+            (arm_side == "left_arm") ? "openarm_left_hand" : "openarm_right_hand";
 
         Dynamics arm_dynamics(urdf_path, root_link, leaf_link);
         arm_dynamics.Init();
 
         std::cout << "=== Initializing Leader OpenArm ===" << std::endl;
-        openarm::can::socket::OpenArm *openarm =
+        openarm::can::socket::OpenArm* openarm =
             openarm_init::OpenArmInitializer::initialize_openarm(can_interface, true);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -85,20 +86,25 @@ int main(int argc, char** argv) {
         std::vector<double> arm_joint_positions(openarm->get_arm().get_motors().size(), 0.0);
         std::vector<double> arm_joint_velocities(openarm->get_arm().get_motors().size(), 0.0);
 
-        std::vector<double> gripper_joint_positions(openarm->get_gripper().get_motors().size(), 0.0);
-        std::vector<double> gripper_joint_velocities(openarm->get_gripper().get_motors().size(), 0.0);
+        std::vector<double> gripper_joint_positions(openarm->get_gripper().get_motors().size(),
+                                                    0.0);
+        std::vector<double> gripper_joint_velocities(openarm->get_gripper().get_motors().size(),
+                                                     0.0);
 
         std::vector<double> grav_torques(openarm->get_arm().get_motors().size(), 0.0);
 
-        while(keep_running){
-
+        while (keep_running) {
             frame_count++;
             auto current_time = std::chrono::high_resolution_clock::now();
 
             // Calculate and display Hz every second
-            auto time_since_last_display = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - last_hz_display).count();
-            if (time_since_last_display >= 1000) { // Every 1000ms (1 second)
-                auto total_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
+            auto time_since_last_display = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                               current_time - last_hz_display)
+                                               .count();
+            if (time_since_last_display >= 1000) {  // Every 1000ms (1 second)
+                auto total_time =
+                    std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time)
+                        .count();
                 double hz = (frame_count * 1000.0) / total_time;
                 std::cout << "=== Loop Frequency: " << hz << " Hz ===" << std::endl;
                 last_hz_display = current_time;
@@ -112,7 +118,7 @@ int main(int argc, char** argv) {
 
             arm_dynamics.GetGravity(arm_joint_positions.data(), grav_torques.data());
 
-            for(size_t i = 0; i < openarm->get_arm().get_motors().size(); ++i){
+            for (size_t i = 0; i < openarm->get_arm().get_motors().size(); ++i) {
                 // std::cout << "grav_torques[" << i << "] = " << grav_torques[i] << std::endl;
             }
 
@@ -120,12 +126,11 @@ int main(int argc, char** argv) {
             cmds.reserve(grav_torques.size());
 
             std::transform(grav_torques.begin(), grav_torques.end(), std::back_inserter(cmds),
-                [](double t) { return openarm::damiao_motor::MITParam{0, 0, 0, 0, t}; });
+                           [](double t) { return openarm::damiao_motor::MITParam{0, 0, 0, 0, t}; });
 
             openarm->get_arm().mit_control_all(cmds);
 
             openarm->recv_all();
-
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));

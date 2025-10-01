@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 #pragma once
 
 #include <yaml-cpp/yaml.h>
+
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <stdexcept>
 
 class YamlLoader {
 public:
@@ -26,7 +26,8 @@ public:
         try {
             root_ = YAML::LoadFile(filepath);
         } catch (const std::exception& e) {
-            throw std::runtime_error("Failed to load YAML file: " + filepath + ", error: " + e.what());
+            throw std::runtime_error("Failed to load YAML file: " + filepath +
+                                     ", error: " + e.what());
         }
     }
 

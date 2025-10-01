@@ -18,12 +18,10 @@
 
 class JointMapper {
 public:
-  JointMapper();
-  ~JointMapper();
+    JointMapper();
+    ~JointMapper();
 
-  void motor_to_joint_position(const double *motor_position,
-                               double *joint_position);
-  void motor_to_joint_velocity(const double *motor_velocity,
-                               double *joint_velocity);
-  void joint_to_motor_torque(const double *joint_torque, double *motor_torque);
+    void motor_to_joint_position(const double *motor_position, double *joint_position);
+    void motor_to_joint_velocity(const double *motor_velocity, double *joint_velocity);
+    void joint_to_motor_torque(const double *joint_torque, double *motor_torque);
 };

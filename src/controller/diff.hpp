@@ -18,57 +18,52 @@
 
 #include <openarm_constants.hpp>
 
-class Differentiator
-{
-        private:
-                double Ts_;                            // Sampling time
-                double velocity_z1_[NMOTORS] = {0.0};  // Velocity (1 step before)
-                double position_z1_[NMOTORS] = {0.0};  // Position (1 step before)
-                double acc_z1_[NMOTORS] = {0.0};
-                double acc_[NMOTORS] = {0.0};
-        public:
-                Differentiator(double Ts) : Ts_(Ts) {}
+class Differentiator {
+private:
+    double Ts_;                            // Sampling time
+    double velocity_z1_[NMOTORS] = {0.0};  // Velocity (1 step before)
+    double position_z1_[NMOTORS] = {0.0};  // Position (1 step before)
+    double acc_z1_[NMOTORS] = {0.0};
+    double acc_[NMOTORS] = {0.0};
 
-                /*
-                 * Compute the motor speed by taking the derivative of
-                 * the motion.
-                 */
-                void Differentiate(const double *position, double *velocity)
-                {
-                        double a = 1.0 / (1.0 + Ts_ * CUTOFF_FREQUENCY);
-                        double b = a * CUTOFF_FREQUENCY;
+public:
+    Differentiator(double Ts) : Ts_(Ts) {}
 
-                        for (int i = 0; i < NMOTORS; i++) {
-                                if (position_z1_[i] == 0.0) {
-                                        position_z1_[i] = position[i];
-                                }
+    /*
+     * Compute the motor speed by taking the derivative of
+     * the motion.
+     */
+    void Differentiate(const double *position, double *velocity) {
+        double a = 1.0 / (1.0 + Ts_ * CUTOFF_FREQUENCY);
+        double b = a * CUTOFF_FREQUENCY;
 
-                                velocity[i] = velocity_z1_[i] * a + b * (position[i] - position_z1_[i]);
-                                position_z1_[i] = position[i];
-                                velocity_z1_[i] = velocity[i];
-                        }
+        for (int i = 0; i < NMOTORS; i++) {
+            if (position_z1_[i] == 0.0) {
+                position_z1_[i] = position[i];
+            }
 
-                }
+            velocity[i] = velocity_z1_[i] * a + b * (position[i] - position_z1_[i]);
+            position_z1_[i] = position[i];
+            velocity_z1_[i] = velocity[i];
+        }
+    }
 
-                void Differentiate_w_obs(const double *position, double *velocity, double *mass, double *input_torque)
-                {
+    void Differentiate_w_obs(const double *position, double *velocity, double *mass,
+                             double *input_torque) {
+        double a = 1.0 / (1.0 + Ts_ * CUTOFF_FREQUENCY);
+        double b = a * CUTOFF_FREQUENCY;
 
-                        double a = 1.0 / (1.0 + Ts_ * CUTOFF_FREQUENCY);
-                        double b = a * CUTOFF_FREQUENCY;
+        for (int i = 0; i < NMOTORS; i++) {
+            if (position_z1_[i] == 0.0000000) {
+                position_z1_[i] = position[i];
+                acc_z1_[i] = acc_[i];
+            }
 
-                        for (int i = 0; i < NMOTORS; i++) {
-                                if (position_z1_[i] == 0.0000000) {
-                                        position_z1_[i] = position[i];
-                                        acc_z1_[i] = acc_[i];
-                                }
-
-                                acc_[i] = acc_z1_[i] * a + b * (input_torque[i] / (mass[i]));
-                                velocity[i] = velocity_z1_[i] * a + b * (position[i] - position_z1_[i]) + acc_[i];
-                                position_z1_[i] = position[i];
-                                velocity_z1_[i] = velocity[i];
-                                acc_z1_[i] = acc_[i];
-
-                        }
-
-                }
+            acc_[i] = acc_z1_[i] * a + b * (input_torque[i] / (mass[i]));
+            velocity[i] = velocity_z1_[i] * a + b * (position[i] - position_z1_[i]) + acc_[i];
+            position_z1_[i] = position[i];
+            velocity_z1_[i] = velocity[i];
+            acc_z1_[i] = acc_[i];
+        }
+    }
 };

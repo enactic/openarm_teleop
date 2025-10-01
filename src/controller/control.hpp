@@ -15,90 +15,87 @@
 #pragma once
 
 // #include <sensor_msgs/msg/joint_state.hpp>
-#include <utility>
-#include <fstream>
-#include <deque>
-#include <numeric>
-#include <memory>
 #include <controller/diff.hpp>
 #include <controller/dynamics.hpp>
-#include <robot_state.hpp>
+#include <deque>
+#include <fstream>
 #include <joint_state_converter.hpp>
-#include <openarm_constants.hpp>
-#include <robot_state.hpp>
+#include <memory>
+#include <numeric>
 #include <openarm/can/socket/openarm.hpp>
 #include <openarm/damiao_motor/dm_motor_constants.hpp>
+#include <openarm_constants.hpp>
+#include <robot_state.hpp>
+#include <utility>
 
+class Control {
+    openarm::can::socket::OpenArm *openarm_;
 
-class Control
-{
-        openarm::can::socket::OpenArm* openarm_;
+    double Ts_;
+    int role_;
 
-        double Ts_;
-        int role_;
+    size_t arm_motor_num_;
+    size_t hand_motor_num_;
 
-        size_t arm_motor_num_;
-        size_t hand_motor_num_;
+    Differentiator *differentiator_;
+    OpenArmJointConverter *openarmjointconverter_;
+    OpenArmJGripperJointConverter *openarmgripperjointconverter_;
 
-        Differentiator *differentiator_;
-        OpenArmJointConverter *openarmjointconverter_;
-        OpenArmJGripperJointConverter *openarmgripperjointconverter_;
+    std::shared_ptr<RobotSystemState> robot_state_;
 
-        std::shared_ptr<RobotSystemState> robot_state_;
+    std::string arm_type_;
 
-        std::string arm_type_;
+    Dynamics *dynamics_f_;
+    Dynamics *dynamics_l_;
 
-        Dynamics *dynamics_f_;
-        Dynamics *dynamics_l_;
+    double oblique_coordinates_force;
+    double oblique_coordinates_position;
 
-        double oblique_coordinates_force;
-        double oblique_coordinates_position;
+    // for easy logging
+    // std::vector<std::pair<double, double>> velocity_log_;  // (differ_velocity, motor_velocity)
+    // std::string log_file_path_ = "../data/velocity_comparison.csv";
+    static constexpr int VEL_WINDOW_SIZE = 10;
+    static constexpr double VIB_THRESHOLD = 0.7;  // [rad/s]
+    std::deque<double> velocity_buffer_[NJOINTS];
 
-        // for easy logging
-        // std::vector<std::pair<double, double>> velocity_log_;  // (differ_velocity, motor_velocity)
-        // std::string log_file_path_ = "../data/velocity_comparison.csv";
-        static constexpr int VEL_WINDOW_SIZE = 10;
-        static constexpr double VIB_THRESHOLD = 0.7; // [rad/s]
-        std::deque<double> velocity_buffer_[NJOINTS];
+public:
+    Control(openarm::can::socket::OpenArm *arm, Dynamics *dynamics_l, Dynamics *dynamics_f,
+            std::shared_ptr<RobotSystemState> robot_state, double Ts, int role,
+            size_t arm_joint_num, size_t hand_motor_num);
+    Control(openarm::can::socket::OpenArm *arm, Dynamics *dynamics_l, Dynamics *dynamics_f,
+            std::shared_ptr<RobotSystemState> robot_state, double Ts, int role,
+            std::string arm_type, size_t arm_joint_num, size_t hand_motor_num);
+    ~Control();
 
-        public:
-        Control(openarm::can::socket::OpenArm *arm, Dynamics *dynamics_l, Dynamics *dynamics_f, std::shared_ptr<RobotSystemState> robot_state, double Ts, int role, size_t arm_joint_num, size_t hand_motor_num);
-        Control(openarm::can::socket::OpenArm *arm, Dynamics *dynamics_l, Dynamics *dynamics_f, std::shared_ptr<RobotSystemState> robot_state, double Ts, int role, std::string arm_type, size_t arm_joint_num, size_t hand_motor_num);
-        ~Control();
+    std::shared_ptr<RobotSystemState> response_;
+    std::shared_ptr<RobotSystemState> reference_;
 
-        std::shared_ptr<RobotSystemState> response_;
-        std::shared_ptr<RobotSystemState> reference_;
+    std::vector<double> Dn_, Kp_, Kd_, Fc_, k_, Fv_, Fo_;
 
-        std::vector<double> Dn_, Kp_, Kd_,Fc_, k_, Fv_, Fo_;
+    // bool Setup(void);
+    void Setstate(int state);
+    void Shutdown(void);
 
-        // bool Setup(void);
-        void Setstate(int state);
-        void Shutdown(void);
+    void SetParameter(const std::vector<double> &Kp, const std::vector<double> &Kd,
+                      const std::vector<double> &Fc, const std::vector<double> &k,
+                      const std::vector<double> &Fv, const std::vector<double> &Fo);
 
-        void SetParameter(
-                const std::vector<double>& Kp,
-                const std::vector<double>& Kd,
-                const std::vector<double>& Fc,
-                const std::vector<double>& k,
-                const std::vector<double>& Fv,
-                const std::vector<double>& Fo);
+    bool AdjustPosition(void);
 
-        bool AdjustPosition(void);
+    // Compute torque based on bilateral
+    bool bilateral_step();
+    bool unilateral_step();
 
-        // Compute torque based on bilateral
-        bool bilateral_step();
-        bool unilateral_step();
+    // NOTE! Control() class operates on "joints", while the underlying
+    // classes operates on "actuators". The following functions map
+    // joints to actuators.
 
-        // NOTE! Control() class operates on "joints", while the underlying
-        // classes operates on "actuators". The following functions map
-        // joints to actuators.
+    void ComputeJointPosition(const double *motor_position, double *joint_position);
+    void ComputeJointVelocity(const double *motor_velocity, double *joint_velocity);
+    void ComputeMotorTorque(const double *joint_torque, double *motor_torque);
 
-        void ComputeJointPosition(const double *motor_position, double *joint_position);
-        void ComputeJointVelocity(const double *motor_velocity, double *joint_velocity);
-        void ComputeMotorTorque(const double *joint_torque, double *motor_torque);
-
-        // void ComputeFriction(const double *velocity, double *friction);
-        void ComputeFriction(const double* velocity, double* friction, size_t index);
-        void ComputeGravity(const double *position, double *gravity);
-        bool DetectVibration(const double* velocity, bool *what_axis);
+    // void ComputeFriction(const double *velocity, double *friction);
+    void ComputeFriction(const double *velocity, double *friction, size_t index);
+    void ComputeGravity(const double *position, double *gravity);
+    bool DetectVibration(const double *velocity, bool *what_axis);
 };
