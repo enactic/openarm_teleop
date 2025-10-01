@@ -33,6 +33,9 @@ find_package(Eigen3 REQUIRED)
 find_package(urdfdom REQUIRED)
 find_package(urdfdom_headers REQUIRED)
 find_package(yaml-cpp REQUIRED)
+if(NOT TARGET yaml-cpp::yaml-cpp AND TARGET yaml-cpp)
+  add_library(yaml-cpp::yaml-cpp ALIAS yaml-cpp)
+endif()
 
 # -----------------------------
 # Create static library
@@ -45,18 +48,19 @@ add_library(openarm_teleop_lib STATIC
 )
 
 target_include_directories(
-    openarm_teleop_lib PUBLIC
-    ${EIGEN3_INCLUDE_DIRS}
+    openarm_teleop_lib
+    PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 target_link_libraries(openarm_teleop_lib
+    PUBLIC
     OpenArmCAN::openarm_can
-    ${EIGEN3_LIBRARIES}
+    Eigen3::Eigen
     ${orocos_kdl_LIBRARIES}
-    kdl_parser
-    urdfdom_model
-    yaml-cpp
+    ${kdl_parser_LIBRARIES}
+    urdfdom::urdfdom_model
+    yaml-cpp::yaml-cpp
 )
 
 # -----------------------------
@@ -67,11 +71,7 @@ add_executable(comm_test control/openarm_communication_test.cpp)
 add_executable(unilateral_control control/openarm_unilateral_control.cpp)
 add_executable(bilateral_control control/openarm_bilateral_control.cpp)
 
-target_link_libraries(gravity_comp openarm_teleop_lib)
-target_link_libraries(comm_test openarm_teleop_lib)
-target_link_libraries(unilateral_control openarm_teleop_lib)
-target_link_libraries(bilateral_control openarm_teleop_lib)
-
-target_include_directories(gravity_comp PRIVATE ${EIGEN3_INCLUDE_DIRS})
-target_include_directories(unilateral_control PRIVATE ${EIGEN3_INCLUDE_DIRS})
-target_include_directories(bilateral_control PRIVATE ${EIGEN3_INCLUDE_DIRS})
+target_link_libraries(gravity_comp PRIVATE openarm_teleop_lib)
+target_link_libraries(comm_test PRIVATE openarm_teleop_lib)
+target_link_libraries(unilateral_control PRIVATE openarm_teleop_lib)
+target_link_libraries(bilateral_control PRIVATE openarm_teleop_lib)
