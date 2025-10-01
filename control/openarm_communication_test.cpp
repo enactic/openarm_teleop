@@ -19,9 +19,6 @@
 #include <openarm/can/socket/openarm.hpp>
 #include <openarm/damiao_motor/dm_motor_constants.hpp>
 #include <thread>
-#include <csignal>
-#include <atomic>
-
 
 int main(int argc, char** argv) {
     try {
@@ -29,12 +26,11 @@ int main(int argc, char** argv) {
         std::cout << "This example demonstrates the OpenArm API functionality" << std::endl;
 
         std::string can_interface = "can0";
-        if (argc > 1 ){
+        if (argc > 1) {
             can_interface = argv[1];
         }
 
         std::cout << "[INFO] Using CAN interface: " << can_interface << std::endl;
-
 
         // Initialize OpenArm with CAN interface and enable CAN-FD
         std::cout << "Initializing OpenArm CAN..." << std::endl;
@@ -45,8 +41,7 @@ int main(int argc, char** argv) {
             openarm::damiao_motor::MotorType::DM8009, openarm::damiao_motor::MotorType::DM8009,
             openarm::damiao_motor::MotorType::DM4340, openarm::damiao_motor::MotorType::DM4340,
             openarm::damiao_motor::MotorType::DM4310, openarm::damiao_motor::MotorType::DM4310,
-            openarm::damiao_motor::MotorType::DM4310
-        };
+            openarm::damiao_motor::MotorType::DM4310};
 
         std::vector<uint32_t> send_can_ids = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
         std::vector<uint32_t> recv_can_ids = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17};
@@ -100,8 +95,7 @@ int main(int argc, char** argv) {
                                            openarm::damiao_motor::MITParam{0, 0, 0, 0, 0},
                                            openarm::damiao_motor::MITParam{0, 0, 0, 0, 0},
                                            openarm::damiao_motor::MITParam{0, 0, 0, 0, 0},
-                                           openarm::damiao_motor::MITParam{0, 0, 0, 0, 0}
-                                                                                         });
+                                           openarm::damiao_motor::MITParam{0, 0, 0, 0, 0}});
 
         openarm.get_gripper().mit_control_all({openarm::damiao_motor::MITParam{0, 0, 0, 0, 0}});
 
