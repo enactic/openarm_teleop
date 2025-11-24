@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
       - name: Install pre-commit
@@ -54,7 +54,7 @@ jobs:
         runs-on:
           - ubuntu-22.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Install dependencies
         run: |
           sudo apt update
@@ -65,7 +65,7 @@ jobs:
             liburdfdom-headers-dev \
             libyaml-cpp-dev \
             ninja-build
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           path: openarm_can
           repository: enactic/openarm_can
