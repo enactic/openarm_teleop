@@ -48,10 +48,18 @@ add_library(
 target_include_directories(openarm_teleop_lib
                            PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+if(NOT TARGET kdl_parser::kdl_parser)
+  # For old kdl-parser such as libkdl-parser-dev 1.14.2 in Debian.
+  add_library(kdl_parser::kdl_parser INTERFACE IMPORTED)
+  target_link_libraries(kdl_parser::kdl_parser
+                        INTERFACE ${kdl_parser_LIBRARIES})
+  target_include_directories(kdl_parser::kdl_parser
+                             INTERFACE ${kdl_parser_INCLUDE_DIRS})
+endif()
 target_link_libraries(
   openarm_teleop_lib
   PUBLIC OpenArmCAN::openarm_can Eigen3::Eigen ${orocos_kdl_LIBRARIES}
-         ${kdl_parser_LIBRARIES} urdfdom::urdfdom_model yaml-cpp::yaml-cpp)
+         kdl_parser::kdl_parser urdfdom::urdfdom_model yaml-cpp::yaml-cpp)
 
 # -----------------------------
 # Executables
