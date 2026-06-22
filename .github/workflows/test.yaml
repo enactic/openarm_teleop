@@ -1,4 +1,4 @@
-# Copyright 2025 Enactic, Inc.
+# Copyright 2025-2026 Enactic, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -58,9 +58,13 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
+          sudo apt install -y software-properties-common
+          sudo add-apt-repository -y ppa:openarm/main
+          sudo apt install -y \
           sudo apt install -y -V \
             cmake \
             libkdl-parser-dev \
+            libopenarm-can-dev \
             liborocos-kdl-dev \
             liburdfdom-headers-dev \
             libyaml-cpp-dev \
@@ -69,20 +73,6 @@ jobs:
         with:
           path: openarm_can
           repository: enactic/openarm_can
-      - name: "OpenArm CAN: CMake"
-        run: |
-          cmake \
-            -B openarm_can.build \
-            -S openarm_can \
-            -GNinja \
-            -DCMAKE_INSTALL_PREFIX=$PWD/install \
-            -DCMAKE_BUILD_TYPE=Debug
-      - name: "OpenArm CAN: Build"
-        run: |
-          ninja -C openarm_can.build
-      - name: "OpenArm CAN: Install"
-        run: |
-          ninja -C openarm_can.build install
       - name: CMake
         run: |
           cmake \
