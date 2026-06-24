@@ -22,6 +22,11 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+# Keep the directories of linked dependencies in the installed binaries' RPATH
+# so shared libs (e.g. libkdl_parser.so from the ROS env) resolve at runtime
+# when run from the install tree, e.g. via `ros2 run` / `ros2 launch`.
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 # -----------------------------
 # Find external packages
 # -----------------------------
@@ -80,5 +85,7 @@ target_link_libraries(bilateral_control PRIVATE openarm_teleop_lib)
 # -----------------------------
 install(TARGETS gravity_comp comm_test unilateral_control bilateral_control
         DESTINATION lib/${PROJECT_NAME})
+
+install(DIRECTORY launch config DESTINATION share/${PROJECT_NAME})
 
 ament_package()
