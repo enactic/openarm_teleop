@@ -25,6 +25,7 @@ endif()
 # -----------------------------
 # Find external packages
 # -----------------------------
+find_package(ament_cmake REQUIRED)
 find_package(OpenArmCAN REQUIRED)
 # find_package(urdf REQUIRED)
 find_package(orocos_kdl REQUIRED)
@@ -73,3 +74,11 @@ target_link_libraries(gravity_comp PRIVATE openarm_teleop_lib)
 target_link_libraries(comm_test PRIVATE openarm_teleop_lib)
 target_link_libraries(unilateral_control PRIVATE openarm_teleop_lib)
 target_link_libraries(bilateral_control PRIVATE openarm_teleop_lib)
+
+# -----------------------------
+# Install
+# -----------------------------
+install(TARGETS gravity_comp comm_test unilateral_control bilateral_control
+        DESTINATION lib/${PROJECT_NAME})
+
+ament_package()
