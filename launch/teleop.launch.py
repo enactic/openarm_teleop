@@ -29,6 +29,12 @@ ARM_TYPE_MAP = {
     "v20": ("openarm_v2.0", "openarm_v20.urdf.xacro"),
 }
 
+# control_type -> installed binary name
+CONTROL_TYPE_MAP = {
+    "unilateral": "unilateral_control",
+    "bilateral": "bilateral_control",
+}
+
 
 def resolve_xacro_path(arm_type: str) -> str:
     if arm_type not in ARM_TYPE_MAP:
@@ -41,8 +47,16 @@ def resolve_xacro_path(arm_type: str) -> str:
 
 
 def launch_setup(context, *args, **kwargs):
+    control_type = LaunchConfiguration("control_type").perform(context)
     arm_side = LaunchConfiguration("arm_side").perform(context)
     arm_type = LaunchConfiguration("arm_type").perform(context)
+
+    if control_type not in CONTROL_TYPE_MAP:
+        raise RuntimeError(
+            f"Invalid control_type: '{control_type}'. "
+            f"Valid values: {sorted(CONTROL_TYPE_MAP)}"
+        )
+    binary_name = CONTROL_TYPE_MAP[control_type]
 
     if arm_side not in ("right_arm", "left_arm", "both"):
         raise RuntimeError(
@@ -52,7 +66,7 @@ def launch_setup(context, *args, **kwargs):
     # Generate the URDF once. The URDF does not depend on arm_side (bimanual
     # generates both arms; arm_side only selects the leaf link at runtime), and
     # leader/follower share the same description, so a single file serves all
-    # bilateral_control processes.
+    # control processes.
     xacro_path = resolve_xacro_path(arm_type)
     urdf_xml = xacro.process_file(
         xacro_path, mappings={"bimanual": "true"}
@@ -70,7 +84,7 @@ def launch_setup(context, *args, **kwargs):
         get_package_prefix("openarm_teleop"),
         "lib",
         "openarm_teleop",
-        "bilateral_control",
+        binary_name,
     )
     cwd = get_package_share_directory("openarm_teleop")
 
@@ -96,7 +110,7 @@ def launch_setup(context, *args, **kwargs):
         ExecuteProcess(
             cmd=[bin_path, urdf_path, urdf_path, side, leader_can, follower_can],
             cwd=cwd,
-            name=f"bilateral_control_{side}",
+            name=f"{binary_name}_{side}",
             output="screen",
         )
         for side, leader_can, follower_can in arms
@@ -106,6 +120,10 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription(
         [
+            DeclareLaunchArgument(
+                "control_type",
+                description="Control mode to launch: unilateral or bilateral.",
+            ),
             DeclareLaunchArgument(
                 "arm_side",
                 default_value="both",
