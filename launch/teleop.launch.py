@@ -24,9 +24,10 @@ from launch.actions import DeclareLaunchArgument, ExecuteProcess, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 
 # arm_type -> (folder under assets/robot, xacro file name)
+# NOTE: currently only supports version 1.0
 ARM_TYPE_MAP = {
     "v10": ("openarm_v1.0", "openarm_v10.urdf.xacro"),
-    "v20": ("openarm_v2.0", "openarm_v20.urdf.xacro"),
+    # "v20": ("openarm_v2.0", "openarm_v20.urdf.xacro"),
 }
 
 # control_type -> installed binary name
@@ -132,7 +133,7 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "arm_type",
                 default_value="v10",
-                description="Arm type (v10 or v20).",
+                description="Arm type (hardware version).",
             ),
             DeclareLaunchArgument(
                 "leader_right_can",
