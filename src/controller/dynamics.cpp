@@ -14,10 +14,11 @@
 
 #include <controller/dynamics.hpp>
 
-Dynamics::Dynamics(std::string urdf_path, std::string start_link, std::string end_link) {
+Dynamics::Dynamics(std::string urdf_path, std::string start_link,
+                   std::vector<std::string> end_links) {
     this->urdf_path = urdf_path;
     this->start_link = start_link;
-    this->end_link = end_link;
+    this->end_links = end_links;
 }
 
 Dynamics::~Dynamics() {}
@@ -43,6 +44,23 @@ bool Dynamics::Init() {
         fprintf(stderr, "Failed to extract KDL tree: %s\n", urdf_path.c_str());
         return false;
     }
+
+    const auto &segments = kdl_tree.getSegments();
+    for (const auto &candidate : end_links) {
+        if (segments.find(candidate) != segments.end()) {
+            end_link = candidate;
+            break;
+        }
+    }
+    if (end_link.empty()) {
+        std::string candidates;
+        for (const auto &candidate : end_links) {
+            candidates += (candidates.empty() ? "" : ", ") + candidate;
+        }
+        fprintf(stderr, "Failed to find end link: %s: %s\n", urdf_path.c_str(), candidates.c_str());
+        return false;
+    }
+    std::cout << "[Dynamics] End link: " << end_link << std::endl;
 
     if (!kdl_tree.getChain(start_link, end_link, kdl_chain)) {
         fprintf(stderr, "Failed to get KDL chain: %s: %s -> %s\n", urdf_path.c_str(),

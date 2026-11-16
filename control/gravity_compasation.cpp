@@ -68,10 +68,9 @@ int main(int argc, char** argv) {
         std::cout << "URDF path      : " << urdf_path << std::endl;
 
         std::string root_link = "openarm_body_link0";
-        std::string leaf_link =
-            (arm_side == "left_arm") ? "openarm_left_hand" : "openarm_right_hand";
+        std::vector<std::string> leaf_links = openarm_leaf_links(arm_side);
 
-        Dynamics arm_dynamics(urdf_path, root_link, leaf_link);
+        Dynamics arm_dynamics(urdf_path, root_link, leaf_links);
         if (!arm_dynamics.Init()) {
             return 1;
         }
