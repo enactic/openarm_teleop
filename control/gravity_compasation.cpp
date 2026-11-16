@@ -1,4 +1,4 @@
-// Copyright 2025 Enactic, Inc.
+// Copyright 2025-2026 Enactic, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -72,7 +72,9 @@ int main(int argc, char** argv) {
             (arm_side == "left_arm") ? "openarm_left_hand" : "openarm_right_hand";
 
         Dynamics arm_dynamics(urdf_path, root_link, leaf_link);
-        arm_dynamics.Init();
+        if (!arm_dynamics.Init()) {
+            return 1;
+        }
 
         std::cout << "=== Initializing Leader OpenArm ===" << std::endl;
         openarm::can::socket::OpenArm* openarm =

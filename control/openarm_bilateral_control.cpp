@@ -1,4 +1,4 @@
-// Copyright 2025 Enactic, Inc.
+// Copyright 2025-2026 Enactic, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -227,10 +227,14 @@ int main(int argc, char **argv) {
         std::vector<double> follower_Fo = follower_loader.get_vector("FollowerArmParam", "Fo");
 
         Dynamics *leader_arm_dynamics = new Dynamics(leader_urdf_path, root_link, leaf_link);
-        leader_arm_dynamics->Init();
+        if (!leader_arm_dynamics->Init()) {
+            return 1;
+        }
 
         Dynamics *follower_arm_dynamics = new Dynamics(follower_urdf_path, root_link, leaf_link);
-        follower_arm_dynamics->Init();
+        if (!follower_arm_dynamics->Init()) {
+            return 1;
+        }
 
         std::cout << "=== Initializing Leader OpenArm ===" << std::endl;
         openarm::can::socket::OpenArm *leader_openarm =

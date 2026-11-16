@@ -12,12 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The executables must set up the dynamics from the given URDF.
+# The executables must stop before they touch any motor when they
+# can't set up the dynamics from the given URDF.
 
 # A CAN interface that doesn't exist. An executable that passed the
 # dynamics setup fails with CAN_ERROR instead of touching a real one.
 CAN_INTERFACE = "openarm-none"
 CAN_ERROR = "Failed to initialize socket for interface"
+
+
+def chain_error(urdf, side):
+    return (f"Failed to get KDL chain: {urdf}: "
+            f"openarm_body_link0 -> openarm_{side}_hand")
 
 
 def test_gravity_comp(run_gravity_comp, write_urdf):
@@ -27,8 +33,36 @@ def test_gravity_comp(run_gravity_comp, write_urdf):
     assert CAN_ERROR in result.stdout
 
 
+def test_gravity_comp_no_leaf_link(run_gravity_comp, write_urdf):
+    urdf = write_urdf("openarm.urdf", "ee_base_link")
+    result = run_gravity_comp("right_arm", CAN_INTERFACE, urdf)
+    assert result.returncode == 1
+    assert chain_error(urdf, "right") in result.stdout
+    assert CAN_ERROR not in result.stdout
+
+
 def test_teleop(run_teleop, write_urdf):
     urdf = write_urdf("openarm.urdf", "hand")
     result = run_teleop(urdf, urdf, "left_arm", CAN_INTERFACE, CAN_INTERFACE)
     assert "Failed to get KDL chain" not in result.stdout
     assert CAN_ERROR in result.stdout
+
+
+def test_teleop_no_leader_leaf_link(run_teleop, write_urdf):
+    leader_urdf = write_urdf("leader.urdf", "ee_base_link")
+    follower_urdf = write_urdf("follower.urdf", "hand")
+    result = run_teleop(leader_urdf, follower_urdf, "left_arm",
+                        CAN_INTERFACE, CAN_INTERFACE)
+    assert result.returncode == 1
+    assert chain_error(leader_urdf, "left") in result.stdout
+    assert CAN_ERROR not in result.stdout
+
+
+def test_teleop_no_follower_leaf_link(run_teleop, write_urdf):
+    leader_urdf = write_urdf("leader.urdf", "hand")
+    follower_urdf = write_urdf("follower.urdf", "ee_base_link")
+    result = run_teleop(leader_urdf, follower_urdf, "left_arm",
+                        CAN_INTERFACE, CAN_INTERFACE)
+    assert result.returncode == 1
+    assert chain_error(follower_urdf, "left") in result.stdout
+    assert CAN_ERROR not in result.stdout
