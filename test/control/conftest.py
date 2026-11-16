@@ -13,13 +13,18 @@
 # limitations under the License.
 
 # OPENARM_TELEOP_BUILD_DIR is the directory that has the executables
-# to test.
+# to test. OPENARM_TELEOP_TEST_LEADER_INTERFACE and
+# OPENARM_TELEOP_TEST_FOLLOWER_INTERFACE are virtual CAN interfaces
+# the tests can use exclusively. test/with-vcan.sh sets up them.
 
 import os
 import pathlib
 import subprocess
+import time
 
 import pytest
+
+from damiao_simulator import DamiaoSimulator
 
 # The executables load config/*.yaml from the current directory.
 SOURCE_DIR = pathlib.Path(__file__).resolve().parents[2]
@@ -61,19 +66,56 @@ def write_urdf(tmp_path):
     return write
 
 
-def _runner(name):
+def _executable(name):
     build_dir = os.environ.get("OPENARM_TELEOP_BUILD_DIR")
     if not build_dir:
         pytest.skip("OPENARM_TELEOP_BUILD_DIR is not set")
+    return os.path.join(build_dir, name)
+
+
+def _runner(name):
+    executable = _executable(name)
 
     def run(*args):
-        return subprocess.run([os.path.join(build_dir, name), *args],
+        return subprocess.run([executable, *args],
                               stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT,
                               cwd=SOURCE_DIR,
                               text=True,
                               timeout=30)
     return run
+
+
+def wait_until(condition, timeout=10):
+    """Waits until condition() is true. Returns whether it got true."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if condition():
+            return True
+        time.sleep(0.01)
+    return condition()
+
+
+def _simulator(role):
+    variable = f"OPENARM_TELEOP_TEST_{role}_INTERFACE"
+    interface = os.environ.get(variable)
+    if not interface:
+        pytest.skip(f"{variable} is not set")
+    return DamiaoSimulator(interface)
+
+
+@pytest.fixture
+def leader():
+    """Fake motors of the leader arm."""
+    with _simulator("LEADER") as simulator:
+        yield simulator
+
+
+@pytest.fixture
+def follower():
+    """Fake motors of the follower arm."""
+    with _simulator("FOLLOWER") as simulator:
+        yield simulator
 
 
 @pytest.fixture
@@ -85,3 +127,20 @@ def run_gravity_comp():
 def run_teleop(request):
     """Runs unilateral_control and bilateral_control in turn."""
     return _runner(request.param)
+
+
+@pytest.fixture(params=["unilateral_control", "bilateral_control"])
+def start_teleop(request):
+    """Starts unilateral_control and bilateral_control in turn."""
+    executable = _executable(request.param)
+    processes = []
+
+    def start(*args):
+        # pytest shows the output when a test fails.
+        process = subprocess.Popen([executable, *args], cwd=SOURCE_DIR)
+        processes.append(process)
+        return process
+    yield start
+    for process in processes:
+        process.kill()
+        process.wait()

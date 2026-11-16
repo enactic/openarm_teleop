@@ -84,6 +84,23 @@ jobs:
       - name: Build
         run: |
           ninja -C build
+      - name: Prepare virtual CAN interfaces
+        run: |
+          # vcan.ko is in linux-modules-extra-* on some kernels such as
+          # 6.8 but in linux-modules-* on others such as 7.0.
+          if ! sudo modprobe vcan; then
+            sudo apt install -y -V linux-modules-extra-$(uname -r)
+            sudo modprobe vcan
+          fi
+          for interface in vcan0 vcan1; do
+            sudo ip link add dev ${interface} type vcan
+            # For CAN FD
+            sudo ip link set dev ${interface} mtu 72
+            sudo ip link set dev ${interface} up
+          done
       - name: Test
+        env:
+          OPENARM_TELEOP_TEST_LEADER_INTERFACE: vcan0
+          OPENARM_TELEOP_TEST_FOLLOWER_INTERFACE: vcan1
         run: |
           ctest --test-dir build --output-on-failure

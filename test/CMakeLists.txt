@@ -29,7 +29,7 @@ endif()
 add_test(
   NAME control
   COMMAND
-    ${Python3_EXECUTABLE} -m pytest
+    ${CMAKE_CURRENT_SOURCE_DIR}/with-vcan.sh ${Python3_EXECUTABLE} -m pytest
     # Don't write .pytest_cache/ into the source directory.
     -p no:cacheprovider --verbose ${CMAKE_CURRENT_SOURCE_DIR}/control)
 set_tests_properties(
