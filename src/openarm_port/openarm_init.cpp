@@ -1,4 +1,4 @@
-// Copyright 2025 Enactic, Inc.
+// Copyright 2025-2026 Enactic, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,9 +27,10 @@ openarm::can::socket::OpenArm *OpenArmInitializer::initialize_openarm(const std:
 openarm::can::socket::OpenArm *OpenArmInitializer::initialize_openarm(const std::string &can_device,
                                                                       const MotorConfig &config,
                                                                       bool enable_debug) {
-    // Create OpenArm instance
+    // Create OpenArm instance. OpenArm uses CAN FD.
+    const bool enable_fd = true;
     openarm::can::socket::OpenArm *openarm =
-        new openarm::can::socket::OpenArm(can_device, enable_debug);
+        new openarm::can::socket::OpenArm(can_device, enable_fd);
 
     // Perform common initialization
     initialize_(openarm, config, enable_debug);
