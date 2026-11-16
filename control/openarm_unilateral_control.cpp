@@ -195,8 +195,7 @@ int main(int argc, char **argv) {
 
         // Setup dynamics
         std::string root_link = "openarm_body_link0";
-        std::string leaf_link =
-            (arm_side == "left_arm") ? "openarm_left_hand" : "openarm_right_hand";
+        std::vector<std::string> leaf_links = openarm_leaf_links(arm_side);
 
         // Output confirmation
         std::cout << "=== OpenArm Unilateral Control ===" << std::endl;
@@ -206,7 +205,6 @@ int main(int argc, char **argv) {
         std::cout << "Leader URDF path : " << leader_urdf_path << std::endl;
         std::cout << "Follower URDF path: " << follower_urdf_path << std::endl;
         std::cout << "Root link         : " << root_link << std::endl;
-        std::cout << "Leaf link         : " << leaf_link << std::endl;
 
         YamlLoader leader_loader("config/leader.yaml");
         YamlLoader follower_loader("config/follower.yaml");
@@ -227,12 +225,12 @@ int main(int argc, char **argv) {
         std::vector<double> follower_Fv = follower_loader.get_vector("FollowerArmParam", "Fv");
         std::vector<double> follower_Fo = follower_loader.get_vector("FollowerArmParam", "Fo");
 
-        Dynamics *leader_arm_dynamics = new Dynamics(leader_urdf_path, root_link, leaf_link);
+        Dynamics *leader_arm_dynamics = new Dynamics(leader_urdf_path, root_link, leaf_links);
         if (!leader_arm_dynamics->Init()) {
             return 1;
         }
 
-        Dynamics *follower_arm_dynamics = new Dynamics(follower_urdf_path, root_link, leaf_link);
+        Dynamics *follower_arm_dynamics = new Dynamics(follower_urdf_path, root_link, leaf_links);
         if (!follower_arm_dynamics->Init()) {
             return 1;
         }

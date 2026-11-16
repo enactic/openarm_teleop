@@ -29,7 +29,7 @@ def near(arm, joint, position):
 
 
 def test_follow(start_teleop, write_urdf, leader, follower):
-    urdf = write_urdf("openarm.urdf", "hand")
+    urdf = write_urdf("openarm.urdf", "ee_base_link")
     teleop = start_teleop(urdf, urdf, "right_arm",
                           leader.interface, follower.interface)
 

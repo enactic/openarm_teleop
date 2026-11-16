@@ -1,4 +1,4 @@
-// Copyright 2025 Enactic, Inc.
+// Copyright 2025-2026 Enactic, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ private:
 
     std::string urdf_path;
     std::string start_link;
+    std::vector<std::string> end_links;
     std::string end_link;
 
     KDL::JntSpaceInertiaMatrix inertia_matrix;
@@ -52,7 +53,9 @@ private:
     std::unique_ptr<KDL::ChainDynParam> solver;
 
 public:
-    Dynamics(std::string urdf_path, std::string start_link, std::string end_link);
+    // end_links are candidates of the end link. The first one that
+    // exists in the URDF is used.
+    Dynamics(std::string urdf_path, std::string start_link, std::vector<std::string> end_links);
     ~Dynamics();
 
     bool Init();

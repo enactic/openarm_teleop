@@ -52,7 +52,8 @@ def _arm(side, leaf):
 def write_urdf(tmp_path):
     """Writes a bimanual URDF whose arms end with the given leaf link.
 
-    The executables expect "hand" for now.
+    The executables expect "ee_base_link" (OpenArm 2.0) or "hand"
+    (OpenArm 1.0).
     """
 
     def write(name, leaf):

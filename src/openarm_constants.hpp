@@ -1,4 +1,4 @@
-// Copyright 2025 Enactic, Inc.
+// Copyright 2025-2026 Enactic, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <openarm/damiao_motor/dm_motor_constants.hpp>
+#include <string>
 #include <vector>
 
 constexpr double PI = 3.14159265358979323846;
@@ -89,6 +90,16 @@ static const MotorConfig DEFAULT_MOTOR_CONFIG = {
     openarm::damiao_motor::MotorType::DM4310,
     0x08,
     0x18};
+
+// Candidates of the leaf link of the arm. The first one that exists in
+// the URDF is used.
+inline std::vector<std::string> openarm_leaf_links(const std::string &arm_side) {
+    const std::string prefix = (arm_side == "left_arm") ? "openarm_left_" : "openarm_right_";
+    return {
+        prefix + "ee_base_link",  // OpenArm 2.0
+        prefix + "hand",          // OpenArm 1.0
+    };
+}
 
 // opening function
 inline void printOpenArmBanner() {
