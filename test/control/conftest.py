@@ -13,13 +13,16 @@
 # limitations under the License.
 
 # OPENARM_TELEOP_BUILD_DIR is the directory that has the executables
-# to test. The tests must run in the top source directory because the
-# executables load config/*.yaml from the current directory.
+# to test.
 
 import os
+import pathlib
 import subprocess
 
 import pytest
+
+# The executables load config/*.yaml from the current directory.
+SOURCE_DIR = pathlib.Path(__file__).resolve().parents[2]
 
 
 def _arm(side, leaf):
@@ -67,6 +70,7 @@ def _runner(name):
         return subprocess.run([os.path.join(build_dir, name), *args],
                               stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT,
+                              cwd=SOURCE_DIR,
                               text=True,
                               timeout=30)
     return run
