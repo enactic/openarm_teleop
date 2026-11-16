@@ -35,5 +35,6 @@ def test_specified_not_found(run_teleop, write_urdf, tmp_path):
     follower = str(tmp_path / "follower.yaml")
     result = run_teleop(urdf, urdf, "right_arm", CAN_INTERFACE, CAN_INTERFACE,
                         LEADER, follower)
+    assert result.returncode == 1
     assert f"Failed to load YAML file: {follower}" in result.stdout
     assert CAN_ERROR not in result.stdout
