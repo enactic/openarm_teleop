@@ -31,10 +31,7 @@ add_test(
   COMMAND
     ${Python3_EXECUTABLE} -m pytest
     # Don't write .pytest_cache/ into the source directory.
-    -p no:cacheprovider --verbose ${CMAKE_CURRENT_SOURCE_DIR}/control
-  # bilateral_control and unilateral_control load config/*.yaml from the
-  # current directory.
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+    -p no:cacheprovider --verbose ${CMAKE_CURRENT_SOURCE_DIR}/control)
 set_tests_properties(
   control
   PROPERTIES
