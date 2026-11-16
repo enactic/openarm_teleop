@@ -154,12 +154,14 @@ int main(int argc, char **argv) {
         std::string follower_urdf_path;
         std::string leader_can_interface = "can0";
         std::string follower_can_interface = "can2";
+        std::string leader_config_path = "config/leader.yaml";
+        std::string follower_config_path = "config/follower.yaml";
 
         if (argc < 3) {
             std::cerr
                 << "Usage: " << argv[0]
                 << " <leader_urdf_path> <follower_urdf_path> [arm_side] [leader_can] [follower_can]"
-                << std::endl;
+                << " [leader_config_path] [follower_config_path]" << std::endl;
             return 1;
         }
 
@@ -183,6 +185,12 @@ int main(int argc, char **argv) {
             follower_can_interface = argv[5];
         }
 
+        // Optional: Configuration files
+        if (argc >= 8) {
+            leader_config_path = argv[6];
+            follower_config_path = argv[7];
+        }
+
         // URDF file existence check
         if (!std::filesystem::exists(leader_urdf_path)) {
             std::cerr << "[ERROR] Leader URDF not found: " << leader_urdf_path << std::endl;
@@ -204,10 +212,12 @@ int main(int argc, char **argv) {
         std::cout << "Follower CAN     : " << follower_can_interface << std::endl;
         std::cout << "Leader URDF path : " << leader_urdf_path << std::endl;
         std::cout << "Follower URDF path: " << follower_urdf_path << std::endl;
+        std::cout << "Leader config path: " << leader_config_path << std::endl;
+        std::cout << "Follower config path: " << follower_config_path << std::endl;
         std::cout << "Root link         : " << root_link << std::endl;
 
-        YamlLoader leader_loader("config/leader.yaml");
-        YamlLoader follower_loader("config/follower.yaml");
+        YamlLoader leader_loader(leader_config_path);
+        YamlLoader follower_loader(follower_config_path);
 
         // Leader parameters
         std::vector<double> leader_kp = leader_loader.get_vector("LeaderArmParam", "Kp");

@@ -26,8 +26,15 @@ import pytest
 
 from damiao_simulator import DamiaoSimulator
 
-# The executables load config/*.yaml from the current directory.
+# The executables load config/*.yaml from the current directory by
+# default.
 SOURCE_DIR = pathlib.Path(__file__).resolve().parents[2]
+
+# A CAN interface that doesn't exist. An executable that reached the
+# CAN interface setup fails with CAN_ERROR instead of touching a real
+# one.
+CAN_INTERFACE = "openarm-none"
+CAN_ERROR = "Failed to initialize socket for interface"
 
 
 def _arm(side, leaf):
@@ -77,11 +84,11 @@ def _executable(name):
 def _runner(name):
     executable = _executable(name)
 
-    def run(*args):
+    def run(*args, cwd=SOURCE_DIR):
         return subprocess.run([executable, *args],
                               stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT,
-                              cwd=SOURCE_DIR,
+                              cwd=cwd,
                               text=True,
                               timeout=30)
     return run
