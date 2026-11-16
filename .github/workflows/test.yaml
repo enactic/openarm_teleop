@@ -67,7 +67,8 @@ jobs:
             liborocos-kdl-dev \
             liburdfdom-headers-dev \
             libyaml-cpp-dev \
-            ninja-build
+            ninja-build \
+            python3-pytest
       - uses: actions/checkout@v7
         with:
           path: openarm_can
@@ -83,3 +84,6 @@ jobs:
       - name: Build
         run: |
           ninja -C build
+      - name: Test
+        run: |
+          ctest --test-dir build --output-on-failure
