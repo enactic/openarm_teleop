@@ -17,10 +17,7 @@
 
 import pytest
 
-# A CAN interface that doesn't exist. An executable that passed the
-# dynamics setup fails with CAN_ERROR instead of touching a real one.
-CAN_INTERFACE = "openarm-none"
-CAN_ERROR = "Failed to initialize socket for interface"
+from conftest import CAN_ERROR, CAN_INTERFACE
 
 
 # Leaf links of OpenArm 2.0 and OpenArm 1.0
