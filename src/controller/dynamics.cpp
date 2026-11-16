@@ -1,4 +1,4 @@
-// Copyright 2025 Enactic, Inc.
+// Copyright 2025-2026 Enactic, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,7 +45,8 @@ bool Dynamics::Init() {
     }
 
     if (!kdl_tree.getChain(start_link, end_link, kdl_chain)) {
-        fprintf(stderr, "Failed to get KDL chain\n");
+        fprintf(stderr, "Failed to get KDL chain: %s: %s -> %s\n", urdf_path.c_str(),
+                start_link.c_str(), end_link.c_str());
         return false;
     }
 
