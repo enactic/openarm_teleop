@@ -104,3 +104,6 @@ jobs:
           OPENARM_TELEOP_TEST_FOLLOWER_INTERFACE: vcan1
         run: |
           ctest --test-dir build --output-on-failure
+      - name: Install
+        run: |
+          ninja -C build install

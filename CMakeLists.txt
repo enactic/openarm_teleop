@@ -19,6 +19,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(CTest)
+include(GNUInstallDirs)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -75,6 +76,14 @@ target_link_libraries(gravity_comp PRIVATE openarm_teleop_lib)
 target_link_libraries(comm_test PRIVATE openarm_teleop_lib)
 target_link_libraries(unilateral_control PRIVATE openarm_teleop_lib)
 target_link_libraries(bilateral_control PRIVATE openarm_teleop_lib)
+
+# -----------------------------
+# Install
+# -----------------------------
+# These executables aren't for users. They are run by a launcher.
+install(TARGETS gravity_comp unilateral_control bilateral_control
+        DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/openarm-teleop)
+install(DIRECTORY config DESTINATION ${CMAKE_INSTALL_DATADIR}/openarm-teleop)
 
 # -----------------------------
 # Tests
