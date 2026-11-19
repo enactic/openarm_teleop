@@ -85,6 +85,37 @@ install(TARGETS gravity_comp unilateral_control bilateral_control
         DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/openarm-teleop)
 install(DIRECTORY config DESTINATION ${CMAKE_INSTALL_DATADIR}/openarm-teleop)
 
+# Generate URDFs by openarm_description. They need a ROS 2 environment.
+find_package(openarm_description REQUIRED)
+find_program(XACRO xacro REQUIRED)
+set(OPENARM_XACRO ${openarm_description_DIR}/../urdf/openarm.urdf.xacro)
+set(OPENARM_URDFS)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/urdf)
+# OpenArm 2.0 and OpenArm 1.0
+foreach(MAJOR 2 1)
+  set(OPENARM_URDF ${CMAKE_CURRENT_BINARY_DIR}/urdf/openarm-${MAJOR}.0.urdf)
+  add_custom_command(
+    OUTPUT ${OPENARM_URDF}
+    COMMAND ${XACRO} ${OPENARM_XACRO} robot_preset:=v${MAJOR}/default_bimanual
+            -o ${OPENARM_URDF}
+    DEPENDS ${OPENARM_XACRO}
+    VERBATIM)
+  list(APPEND OPENARM_URDFS ${OPENARM_URDF})
+endforeach()
+add_custom_target(urdf ALL DEPENDS ${OPENARM_URDFS})
+install(FILES ${OPENARM_URDFS}
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/openarm-teleop/urdf)
+
+# openarm-teleop finds the above files by relative paths from itself.
+file(RELATIVE_PATH OPENARM_TELEOP_RELATIVE_LIBEXECDIR
+     ${CMAKE_INSTALL_FULL_BINDIR}
+     ${CMAKE_INSTALL_FULL_LIBEXECDIR}/openarm-teleop)
+file(RELATIVE_PATH OPENARM_TELEOP_RELATIVE_DATADIR ${CMAKE_INSTALL_FULL_BINDIR}
+     ${CMAKE_INSTALL_FULL_DATADIR}/openarm-teleop)
+configure_file(bin/openarm-teleop.in openarm-teleop @ONLY)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/openarm-teleop
+        DESTINATION ${CMAKE_INSTALL_BINDIR})
+
 # -----------------------------
 # Tests
 # -----------------------------

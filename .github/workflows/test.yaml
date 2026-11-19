@@ -47,7 +47,7 @@ jobs:
   build:
     name: Build
     runs-on: ${{ matrix.runs-on }}
-    timeout-minutes: 5
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -69,20 +69,52 @@ jobs:
             libyaml-cpp-dev \
             ninja-build \
             python3-pytest
+      - name: Install ROS 2
+        run: |
+          sudo curl \
+            --location \
+            --output /usr/share/keyrings/ros-archive-keyring.gpg \
+            https://raw.githubusercontent.com/ros/rosdistro/master/ros.key
+          echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo ${UBUNTU_CODENAME}) main" | \
+            sudo tee /etc/apt/sources.list.d/ros2.list
+          sudo apt update
+          sudo apt install -y -V \
+            ros-humble-ament-cmake \
+            ros-humble-xacro \
+            ros-humble-zed-description
+      - uses: actions/checkout@v7
+        with:
+          path: openarm_description
+          repository: enactic/openarm_description
+      - name: Install openarm_description
+        run: |
+          source /opt/ros/humble/setup.bash
+          cmake \
+            -B ../openarm_description.build \
+            -S openarm_description \
+            -GNinja \
+            -DBUILD_TESTING=OFF \
+            -DCMAKE_INSTALL_PREFIX=$PWD/../ros2
+          ninja -C ../openarm_description.build install
       - uses: actions/checkout@v7
         with:
           path: openarm_can
           repository: enactic/openarm_can
       - name: CMake
         run: |
+          source /opt/ros/humble/setup.bash
+          source ../ros2/share/openarm_description/local_setup.bash
           cmake \
             -B build \
             -S . \
             -GNinja \
+            -DCMAKE_PREFIX_PATH=$PWD/../ros2 \
             -DCMAKE_INSTALL_PREFIX=$PWD/install \
             -DCMAKE_BUILD_TYPE=Debug
       - name: Build
         run: |
+          source /opt/ros/humble/setup.bash
+          source ../ros2/share/openarm_description/local_setup.bash
           ninja -C build
       - name: Prepare virtual CAN interfaces
         run: |
