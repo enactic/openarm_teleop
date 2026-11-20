@@ -1,0 +1,131 @@
+#!/usr/bin/env python3
+#
+# Copyright 2026 Enactic, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import argparse
+import os
+import pathlib
+
+BIN_DIR = pathlib.Path(__file__).resolve().parent
+LIBEXEC_DIR = (BIN_DIR / "@OPENARM_TELEOP_RELATIVE_LIBEXECDIR@").resolve()
+DATA_DIR = (BIN_DIR / "@OPENARM_TELEOP_RELATIVE_DATADIR@").resolve()
+CONFIG_DIR = DATA_DIR / "config"
+URDF_DIR = DATA_DIR / "urdf"
+
+# (leader, follower)
+DEFAULT_CAN_INTERFACES = {
+    "right": ("can0", "can2"),
+    "left": ("can1", "can3"),
+}
+
+
+def add_common_arguments(parser):
+    parser.add_argument("--arm-side",
+                        choices=["right", "left"],
+                        default="right",
+                        help="The arm to be controlled (default: %(default)s)")
+    parser.add_argument("--openarm-version",
+                        choices=["2.0", "1.0"],
+                        default="2.0",
+                        help="The version of OpenArm (default: %(default)s)")
+
+
+def add_teleop_arguments(parser):
+    add_common_arguments(parser)
+    parser.add_argument("--leader-can-interface",
+                        metavar="INTERFACE",
+                        help="The CAN interface of the leader arm "
+                        "(default: can0 for right, can1 for left)")
+    parser.add_argument("--follower-can-interface",
+                        metavar="INTERFACE",
+                        help="The CAN interface of the follower arm "
+                        "(default: can2 for right, can3 for left)")
+    parser.add_argument("--leader-config",
+                        metavar="PATH",
+                        default=str(CONFIG_DIR / "leader.yaml"),
+                        help="The parameters of the leader arm "
+                        "(default: %(default)s)")
+    parser.add_argument("--follower-config",
+                        metavar="PATH",
+                        default=str(CONFIG_DIR / "follower.yaml"),
+                        help="The parameters of the follower arm "
+                        "(default: %(default)s)")
+
+
+def teleop_arguments(args, urdf):
+    leader_can_interface, follower_can_interface = \
+        DEFAULT_CAN_INTERFACES[args.arm_side]
+    return [
+        urdf,
+        urdf,
+        f"{args.arm_side}_arm",
+        args.leader_can_interface or leader_can_interface,
+        args.follower_can_interface or follower_can_interface,
+        args.leader_config,
+        args.follower_config,
+    ]
+
+
+def gravity_compensation_arguments(args, urdf):
+    return [
+        f"{args.arm_side}_arm",
+        args.can_interface,
+        urdf,
+    ]
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Teleoperate OpenArm")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    bilateral = subparsers.add_parser(
+        "bilateral",
+        help="A follower arm follows a leader arm with force feedback")
+    add_teleop_arguments(bilateral)
+    bilateral.set_defaults(executable="bilateral_control",
+                           build_arguments=teleop_arguments)
+
+    unilateral = subparsers.add_parser(
+        "unilateral",
+        help="A follower arm follows a leader arm without force feedback")
+    add_teleop_arguments(unilateral)
+    unilateral.set_defaults(executable="unilateral_control",
+                            build_arguments=teleop_arguments)
+
+    gravity_compensation = subparsers.add_parser(
+        "gravity-compensation",
+        help="An arm keeps its posture against gravity")
+    add_common_arguments(gravity_compensation)
+    gravity_compensation.add_argument("--can-interface",
+                                      metavar="INTERFACE",
+                                      default="can0",
+                                      help="The CAN interface of the arm "
+                                      "(default: %(default)s)")
+    gravity_compensation.set_defaults(
+        executable="gravity_comp",
+        build_arguments=gravity_compensation_arguments)
+
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    urdf = str(URDF_DIR / f"openarm-{args.openarm_version}.urdf")
+    executable = str(LIBEXEC_DIR / args.executable)
+    os.execv(executable, [executable, *args.build_arguments(args, urdf)])
+
+
+if __name__ == "__main__":
+    main()
